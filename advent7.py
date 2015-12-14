@@ -1,10 +1,10 @@
-operation = {
+op = {
     'OR'    : lambda x, y: x|y,
     'AND'   : lambda x, y: x&y,
-    'NOT'   : lambda x, y: ~x,
+    'NOT'   : lambda x   : ~x,
     'LSHIFT': lambda x, y: x<<y,
     'RSHIFT': lambda x, y: x>>y,
-    'PASS'  : lambda x, y: x,
+    'PASS'  : lambda x   : x,
     }
 
 class Node:
@@ -16,23 +16,37 @@ class Node:
 
     def getVal(self):
         if self._val is None:
-            x, y = self._input
-            print(x, y)
-            print(nodeset[x], nodeset[y])
-            x, y = nodeset[x], nodeset[y]
-            self._val = self._operator(x.getVal(), y.getVal())
+            o = self._operator
+            if o == 'NOT' or o == 'PASS':
+                x = nodeset[self._input[0]].getVal()
+                self._val = op[o](x)
+            else:
+                x, y = self._input
+                try:
+                    x = int(x)
+                except ValueError:
+                    x = nodeset[x].getVal()
+                try:
+                    y = int(y)
+                except ValueError:
+                    y = nodeset[y].getVal()
+                self._val = op[o](x, y)
         return self._val
+
+    def setVal(self, val):
+        self._val = val
 
     def __str__(self):
         return self._string
 
-nodeset = {
-    'dummynode': Node(val=0)
-    }
+    def __repr__(self):
+        return self._string
+
+nodeset = {}
 
 def resetNodes():
     global nodeset
-    nodeset = {'dummynode': Node(val=0)}
+    nodeset = {}
 
 resetNodes()
 
@@ -46,24 +60,28 @@ def initNodes(instructs):
             k = lhs[0]
             try:
                 k = int(k)
-                nodeset[rhs] = Node(val=k)
+                nodeset[rhs] = Node(val=k, string=i)
             except ValueError:
-                print(k)
-                nodeset[rhs] = Node(operator=operation['PASS'], inp=[k, 'dummynode'])
+                nodeset[rhs] = Node(operator='PASS', inp=[k], string=i)
         elif lhs[0] == 'NOT':
-            nodeset[rhs] = Node(operator=operation[lhs[0]], inp=[lhs[1], 'dummynode'])
+            nodeset[rhs] = Node(operator='NOT', inp=[lhs[1]], string=i)
         else:
-            nodeset[rhs] = Node(operator=operation[lhs[1]], inp=[lhs[0], lhs[2]])
+            nodeset[rhs] = Node(operator=lhs[1], inp=[lhs[0], lhs[2]], string=i)
 
 
 f = None
-# with open('advent7data.txt') as d:
-#     f = d.read().strip().split('\n')
-
-with open('testing.txt') as d:
+with open('advent7data.txt') as d:
     f = d.read().strip().split('\n')
 
-initNodes(f)
-# print('wire a val: {0}'.format(nodeset['a'].getVal()))
+# with open('testing.txt') as d:
+#     f = d.read().strip().split('\n')
 
-print('wire a val: {0}'.format(nodeset['a'].getVal()))
+initNodes(f)
+aVal = nodeset['a'].getVal()
+print('wire a val: {0}'.format(aVal))
+
+resetNodes()
+initNodes(f)
+nodeset['b'].setVal(aVal)
+aVal2 = nodeset['a'].getVal()
+print('wire a val with b overide: {0}'.format(aVal2))
