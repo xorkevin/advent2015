@@ -1,4 +1,5 @@
 from itertools import permutations
+import sys
 
 class Node:
     def __init__(self, key):
@@ -69,11 +70,21 @@ def bruteForceSalesman(graph):
 
 def parseInstruct(instructs, network):
     for i in instructs:
-        pass
-        #need to check for uniqueness of nodes, do not overwrite same node
+        a, _, b, _, cost = i.split()
+        cost = int(cost)
+        if a not in network._nodes:
+            network.addNode(a)
+        if b not in network._nodes:
+            network.addNode(b)
+        network.getNode(a).connect(b, cost)
+        network.getNode(b).connect(a, cost)
+
 
 f = None
 with open('advent9data.txt') as d:
     f = d.read().strip().split('\n')
 
 net = Network()
+parseInstruct(f, net)
+paths = bruteForceSalesman(net)
+print('shortest: {0}\nlongest: {1}'.format(paths['shortest']['cost'], paths['longest']['cost']))
